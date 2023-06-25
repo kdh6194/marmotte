@@ -1,0 +1,327 @@
+{{#section 'css'}}
+    <style>
+        header,footer {margin-left: 250px; margin-right: 250px;}
+        #detail_main {border: 1px solid black; width: 45%; margin-left: 26%; padding: -5px; position:static}
+        #all_top {width: 100%; height: 50%;}
+        #top1 {width: 60%; text-align: center;}
+        #pic1 {width: 96%; padding: 3%}
+        #top2 {width: 55%; height: 50%;}
+        #food_list {margin-top: 3%; margin-left: -10%; list-style-type: none;}
+        #food_list li {margin: 4% 3%;}
+        #all_bottom {width: 100%; height: 49%;}
+        #bottom1 {text-align: center;}
+        #map_pic{width: 90%;}
+        #comment_box{width: 100%;}
+        #all_comment{height: 330px; overflow-y: scroll;}
+        #form-commentInfo {border-bottom: 1px solid black; position: relative; padding: 5px;}
+        #imot{
+            background: white;
+            border: 1px solid black;
+            border-radius: 5px;
+            top :-140%;
+            position: absolute;
+            margin-left: 40%;
+            display: none;
+            text-align:center;
+            width: 230px;
+            height: 190%;
+        }
+        #cls_imt{
+            border-bottom: 1px solid black;
+            text-align: right;
+            width: 230px;
+            height: 26px;
+        }
+        #imot_lefttop{width: 250%; text-align: left}
+        #imot_righttop{cursor:pointer;}
+        #fst_line{text-align: left; margin: 1%;}
+        .eachComment{
+            padding: 10px;
+            height: auto;
+            max-height: 130px;
+            border-bottom: 1px solid black;
+        }
+        #voteUp {width: 52px; height: 32px;}
+        #voteDown {width: 53px; height: 32px;}
+
+
+        #full_map {
+            z-index: 4;
+            width: 100%;
+            height: 100%;
+            position: fixed;
+            left: 0;
+            top: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: transparent;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            backdrop-filter: blur(1.5px);
+            -webkit-backdrop-filter: blur(1.5px);
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.18);
+        }
+        #map_background {
+            width: 120%;
+            height: 100%;
+            position: fixed;
+            background: rgba(0, 0, 0, 0.8);
+        }
+        #close_map {position: absolute; top: 0.5%; right: 3.7%; z-index: 3; cursor:pointer;}
+        #map {
+            width: 93%;
+            height: 93%;
+            position: relative;
+            left: 0;
+            top: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.18);
+        }
+        #infowindow{
+            text-align:center;
+            width: auto;
+        }
+        #storname{font-size: 18px; font-weight: bold;}
+        #infoline{border-bottom:1px solid black;}
+
+    </style>
+{{/section}}
+{{#section 'script'}}
+    <script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=014e1d895db37333ff382f2de38cf1f8&libraries=services"></script>
+    <script>
+        const mappic = document.querySelector('#map_pic');
+        const fullmap = document.querySelector('#full_map');
+        const background = document.querySelector('#map_background');
+        const closemap = document.querySelector('#close_map');
+        const pic1 = document.querySelector('#pic1');
+
+        let lat = 37.48596, lon = 126.89707;
+        let test = [lat, lon];
+
+        let picnum = String(mappic.dataset.num);
+        let plus_z = [];
+
+        if(picnum.length<3){
+            let j = 3-picnum.length;
+
+            for(let i=0;i<j;i++){
+                plus_z.push('0');
+            }
+            plus_z.push(picnum)
+        }
+
+        let picname = plus_z.join('');
+        mappic.src = "./img/map/"+picname+".png";
+        pic1.src = "./img/fname/"+pic1.dataset.data+".png";
+
+        const addr = document.querySelector("#addr").innerText;
+        const Storname = document.querySelector("#Storname").innerText;
+        const menu = document.querySelector("#menu").innerText;
+
+        let container = document.getElementById('map'); //지도를 담을 영역의 DOM 레퍼런스
+
+        mappic.addEventListener('click', () => {
+            fullmap.style.display = 'flex';
+
+            options = { //지도를 생성할 때 필요한 기본 옵션
+                //center: new kakao.maps.LatLng(37.48599755161998, 126.89718681736144), //지도의 중심좌표.
+                center: new kakao.maps.LatLng(test[0], test[1]), //지도의 중심좌표.
+                level: 2 //지도의 레벨(확대, 축소 정도)
+            };
+
+            let map = new kakao.maps.Map(container, options);
+
+            function relayout() {
+                map.relayout();
+            }
+
+            let geocoder = new kakao.maps.services.Geocoder();
+
+            /*navigator.geolocation.getCurrentPosition(function(position) {
+
+                let mylat = position.coords.latitude, mylon = position.coords.longitude;
+                console.log(mylat, mylon);
+
+                let myloc = new kakao.maps.LatLng(mylat, mylon);
+                let message = '<div style="padding:5px;">현위치</div>';
+
+                let mymarker = new kakao.maps.Marker({
+                    map: map,
+                    position: myloc
+                });
+
+                let infowindow = new kakao.maps.InfoWindow({
+                    content: message
+                });
+
+                infowindow.open(map, mymarker);
+            }, function (position){alert('위치정보 로드 실패!')},{enableHighAccuracy: true});*/
+
+            // 주소로 좌표를 검색합니다
+            geocoder.addressSearch(addr, function(result, status) {
+
+                // 정상적으로 검색이 완료됐으면
+                if (status === kakao.maps.services.Status.OK) {
+
+                    let coords = new kakao.maps.LatLng(result[0].y, result[0].x);
+
+                    // 결과값으로 받은 위치를 마커로 표시합니다
+                    let marker = new kakao.maps.Marker({
+                        map: map,
+                        position: coords
+                    });
+
+                    let info1 = `<div id="storname">${Storname}</div>`;
+                    info1 += `<div>${menu}</div>`;
+                    info1 += `<div id="infoline"></div>`;
+                    info1 += `<div id="infoaddr">${addr}</div>`;
+
+
+                    // 인포윈도우로 장소에 대한 설명을 표시합니다
+                    let infowindow = new kakao.maps.InfoWindow({
+                        content: `<span id="infowindow">${info1}</span>`
+                    });
+
+
+
+                    /*                (function(e) {
+                                        let w = e.offsetWidth + 10;
+                                        let ml = w/2;
+                                        e.parentElement.style.top = "82px";
+                                        e.parentElement.style.left = "50%";
+                                        e.parentElement.style.marginLeft = -ml+"px";
+                                        e.parentElement.style.width = w+"px";
+                                        e.parentElement.parentElement.style.border = "0px";
+                                        e.parentElement.parentElement.style.background = "unset";
+                                    });*/
+
+                    infowindow.open(map, marker);
+
+                    /*                const infowin = document.querySelector('#infowindow');
+                                    if(infowin){
+                                        infowin.parentElement.parentElement.style.Height = "100px";
+                                        infowin.parentElement.parentElement.style.Width = "300px";
+                                        console.log(infowin.parentElement.parentElement);
+                                    }*/
+
+                    let infowin = document.querySelectorAll('#infowindow');
+                    infowin.forEach(function(e) {
+                        let w = e.offsetWidth + 1;
+                        let h = e.offsetHeight - 20;
+                        e.parentElement.parentElement.style.width = w+5+"px";
+                        e.parentElement.parentElement.style.height = h+"px";
+                        e.parentElement.parentElement.style.borderRadius = "10px";
+                        e.parentElement.parentElement.style.border = "2px solid black";
+                    });
+
+                    // 지도의 중심을 결과값으로 받은 위치로 이동시킵니다
+                    map.setCenter(coords);
+                }
+            });
+
+        });
+
+        background.addEventListener('click', e => {
+            fullmap.style.display = "none"
+        });
+
+        closemap.addEventListener('click', e => {
+            fullmap.style.display = "none"
+        });
+    </script>
+    <script src="./js/chat.js"></script>
+{{/section}}
+
+<main>
+    <div id="detail_main">
+        <table id="detail_table">
+            {{#food}}
+                <tr id="all_top">
+                    <td id="top1">
+                        <img src="#" alt="pic1" id="pic1" data-data="{{title}}">
+                    </td>
+                    <td id="top2">
+                        <div>
+                            <ul id="food_list">
+                                <li>상호 : {{title}}</li>
+                                <li>평점 : {{grade}}</li>
+                                <li>업종 : {{sig}}</li>
+                                <li>전화번호 : {{tel}}</li>
+                                <li>주소 : {{addr}}</li>
+                                <li>영업시간 : {{time}}</li>
+                                <li>주 메뉴 : {{menu}}</li>
+                            </ul>
+                            <div id="addr" style="display: none;">{{addr}}</div>
+                            <div id="Storname" style="display: none;">{{title}}</div>
+                            <div id="menu" style="display: none;">{{menu}}</div>
+                        </div>
+                    </td>
+                </tr>
+
+            <tr id="all_bottom">
+                <td id="bottom1"><img src="#" id="map_pic" data-num="{{eno}}"></td>
+            {{/food}}
+            <td id="comment_box">
+                <div id="form-commentInfo"
+                     {{#unless session.userid}}style="display: none"{{/unless}}>
+                    {{#mem}}
+                        <div id="comm_top" data-type="{{userid}}">{{userid}}님 환영합니다.</div>
+                    {{/mem}}
+                    <div id="comment-count">댓글 <span id="count">0</span></div>
+                    <input id="comment-input" placeholder="댓글을 입력해 주세요.">
+                    <button id="submit">등록</button>
+                    <!--<button id="add_text">중간에 추가</button>-->
+                    <button id="imot_btn">이모티콘</button>
+                    <div id="imot">
+                        <div id="cls_imt">
+                            <table>
+                                <tr>
+                                    <td id="imot_lefttop">
+                                        <div>이모티콘</div>
+                                    </td>
+                                    <td id="imot_righttop">
+                                        <div id="close_imot">X </div>
+                                    </td>
+                                </tr>
+                            </table>
+                            <div id="fst_line">
+                                <input type="image" src="./img/emoticon/angry.png" id="imot_angry">
+                                <input type="image" src="./img/emoticon/argh.png" id="imot_argh">
+                                <input type="image" src="./img/emoticon/boo.png" id="imot_boo">
+                                <input type="image" src="./img/emoticon/crying.png" id="imot_crying">
+                                <input type="image" src="./img/emoticon/hmm.png" id="imot_hmm">
+                                <input type="image" src="./img/emoticon/laugh.png" id="imot_laugh">
+                                <input type="image" src="./img/emoticon/lovely.png" id="imot_lovely">
+                                <input type="image" src="./img/emoticon/noo.png" id="imot_noo">
+                                <input type="image" src="./img/emoticon/oh.png" id="imot_oh">
+                                <input type="image" src="./img/emoticon/omg.png" id="imot_omg">
+                                <input type="image" src="./img/emoticon/sleeping.png" id="imot_sleeping">
+                                <input type="image" src="./img/emoticon/smile.png" id="imot_smile">
+                                <input type="image" src="./img/emoticon/umm.png" id="imot_umm">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {{#unless session.userid}}
+                    <div id="plzlogin">해당 기능은 로그인 후 이용하실 수 있습니다.</div>
+                {{/unless}}
+                <div id="all_comment">
+                    <div id=comments></div>
+                </div>
+            </td>
+            <div id="full_map" style="display: none;">
+                <div id="map_background"></div>
+                <div id="close_map"><img src="./img/x_button.png"></div>
+                <div id="map"></div>
+                <div id="marker"></div>
+            </div>
+        </tr>
+        </table>
+    </div>
+</main>
